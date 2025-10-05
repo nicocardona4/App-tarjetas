@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flashcards - Selección</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#ffffff;
+    --muted:#94a3b8;
+    --accent:#06b6d4;
+  }
+  body{
+    margin:0;
+    font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:linear-gradient(180deg,#071024 0%, #071022 100%);
+    color:var(--card);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:16px;
+  }
+  h1{
+    font-size:1.6rem;
+    margin-bottom:16px;
+  }
+  .buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  button{
+    background:var(--accent);
+    color:#000;
+    border:none;
+    border-radius:8px;
+    padding:10px 16px;
+    font-size:1rem;
+    cursor:pointer;
+  }
+  button:hover{opacity:0.9}
+  .card{
+    background:rgba(255,255,255,0.05);
+    border-radius:12px;
+    padding:24px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 6px 18px rgba(0,0,0,0.3);
+    margin-bottom:12px;
+  }
+  .question{
+    font-size:1.2rem;
+    margin:12px 0 20px 0;
+    min-height:48px;
+  }
+  input{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    font-size:1rem;
+    margin-bottom:12px;
+  }
+  .stats{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    max-width:420px;
+    margin-top:18px;
+    font-size:0.95rem;
+    color:var(--muted);
+  }
+  .result{
+    font-size:1rem;
+    margin-top:10px;
+    min-height:22px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Selecciona un set de flashcards</h1>
+<div class="buttons">
+  <button id="vocabBtn">Vocabulario</button>
+  <button id="kanjiBtn">Kanjis</button>
+  <button id="gramBtn">Gramática</button>
+  <button id="mixBtn">Mezcla</button>
+</div>
+
+<div class="card">
+  <div id="question" class="question">Selecciona un set para empezar...</div>
+  <input id="answerInput" type="text" placeholder="Escribí tu respuesta..." autocomplete="off" />
+  <button id="checkBtn">Comprobar</button>
+  <button id="nextBtn" style="margin-top:8px;">Siguiente</button>
+
+  <div id="result" class="result"></div>
+</div>
+
+<div class="stats">
+  <div>Correctas: <span id="correctCount">0</span></div>
+  <div>Incorrectas: <span id="incorrectCount">0</span></div>
+  <div>Restantes: <span id="remainingCount">0</span></div>
+</div>
+
+<script>
+  // --- Arrays de tarjetas ---
+const vocabulario = [
+  { front: "うすい", back: "Delgado" },
+  { front: "ふとい", back: "Grueso" },
+  { front: "こい", back: "Denso" },
+  { front: "かるい", back: "Ligero" },
+  { front: "せまい", back: "Estrecho" },
+  { front: "ひろい", back: "Amplio" },
+  { front: "あさい", back: "Superficial" },
+  { front: "ふかい", back: "Profundo" },
+  { front: "あつい", back: "Grueso (objeto)" },
+  { front: "あたたかい", back: "Cálido" },
+  { front: "あつい", back: "Caliente" },
+  { front: "つめたい", back: "Frío (al tacto)" },
+  { front: "すずしい", back: "Fresco (clima)" },
+  { front: "あまい", back: "Dulce" },
+  { front: "からい", back: "Picante" },
+  { front: "にがい", back: "Amargo" },
+  { front: "しおからい", back: "Salado" },
+  { front: "おもい", back: "Pesado" },
+  { front: "おそい", back: "Lento" },
+  { front: "おおい", back: "Mucho" },
+  { front: "すくない", back: "Poco" },
+  { front: "ながい", back: "Largo" },
+  { front: "みじかい", back: "Corto" },
+  { front: "はやい", back: "Rápido" },
+  { front: "たかい", back: "Alto" },
+  { front: "ひくい", back: "Bajo" },
+  { front: "あかるい", back: "Claro" },
+  { front: "くらい", back: "Oscuro" },
+  { front: "いい", back: "Bueno" },
+  { front: "わるい", back: "Malo" },
+  { front: "あたらしい", back: "Nuevo" },
+  { front: "ふるい", back: "Viejo" },
+  { front: "きれい", back: "Limpio / Hermoso" },
+  { front: "きたない", back: "Sucio" },
+  { front: "しんせつ", back: "Amable" },
+  { front: "げんき", back: "Saludable / Animado" },
+  { front: "ゆうめい", back: "Famoso" },
+  { front: "にぎやか", back: "Animado (lugar)" },
+  { front: "しずか", back: "Tranquilo (lugar)" },
+  { front: "べんり", back: "Conveniente" },
+  { front: "ふべん", back: "Inconveniente" },
+  { front: "たいせつ", back: "Importante" },
+  { front: "じょうぶ", back: "Fuerte / Robusto" },
+  { front: "すてき", back: "Encantador / Maravilloso" },
+
+  // Nuevas palabras agregadas
+  { front: "うかがう", back: "Consultar / Preguntar (forma humilde)" },
+  { front: "あやまる", back: "Disculparse" },
+  { front: "まちがえる", back: "Equivocarse" },
+  { front: "みおくる", back: "Despedirse / Acompañar al partir" },
+  { front: "かける", back: "Colgar" },
+  { front: "ごみ", back: "Basura" },
+  { front: "じしん", back: "Terremoto" },
+  { front: "たいふう", back: "Tifón / Viento fuerte" },
+  { front: "たんす", back: "Mueble / Cajonera" },
+  { front: "よやく", back: "Reserva / Cita" },
+  { front: "そうだん", back: "Consulta / Conversación" },
+  { front: "ほか", back: "Otro / Demás" }
+];
+
+
+  const kanjisN4 = [
+  // anteriores
+  { front: "明", back: "あかるい - claro, luminoso" },
+  { front: "安", back: "やすい - barato, tranquilo" },
+  { front: "医", back: "いしゃ - médico" },
+  { front: "育", back: "そだつ／そだてる - crecer / criar" },
+
+  { front: "使う", back: "つかう - usar" },
+  { front: "作る", back: "つくる - hacer, crear" },
+  { front: "泣く", back: "なく - llorar" },
+  { front: "立つ", back: "たつ - ponerse de pie" },
+  { front: "座る", back: "すわる - sentarse" },
+  { front: "子供", back: "こども - niño, hijo" },
+  { front: "心配", back: "しんぱい - preocupación" },
+  { front: "店長", back: "てんちょう - gerente de tienda" },
+  { front: "悪い", back: "わるい - malo" },
+  { front: "言葉", back: "ことば - palabra, idioma" },
+
+  { front: "取る", back: "とる - tomar, agarrar" },
+  { front: "起きる", back: "おきる - levantarse, despertarse" },
+  { front: "持つ", back: "もつ - tener, sostener" },
+  { front: "待つ", back: "まつ - esperar" },
+  { front: "飛ぶ", back: "とぶ - volar" },
+  { front: "遊ぶ", back: "あそぶ - jugar, divertirse" },
+  { front: "手伝う", back: "てつだう - ayudar" },
+  { front: "習う", back: "ならう - aprender (de alguien)" },
+  { front: "並ぶ", back: "ならぶ - alinearse, ponerse en fila" },
+
+  // nuevos
+  { front: "起こる", back: "おこる - ocurrir, suceder" },
+  { front: "並べる", back: "ならべる - colocar en fila" },
+  { front: "調べる", back: "しらべる - investigar, examinar" },
+  { front: "面白い", back: "おもしろい - interesante, divertido" },
+  { front: "切る", back: "きる - cortar" },
+  { front: "泳ぐ", back: "およぐ - nadar" },
+  { front: "寝る", back: "ねる - dormir" },
+  { front: "忙しい", back: "いそがしい - ocupado" },
+  { front: "家族", back: "かぞく - familia" },
+  { front: "写真", back: "しゃしん - fotografía" },
+  { front: "新聞", back: "しんぶん - periódico" },
+  { front: "辞書", back: "じしょ - diccionario" },
+  { front: "走る", back: "はしる - correr" },
+  { front: "歩く", back: "あるく - caminar" },
+  { front: "勉強", back: "べんきょう - estudio" },
+  { front: "部屋", back: "へや - habitación" },
+  { front: "運転", back: "うんてん - conducir" },
+  { front: "運動", back: "うんどう - ejercicio" },
+  { front: "授業", back: "じゅぎょう - clase, lección" },
+  { front: "食事", back: "しょくじ - comida" },
+  { front: "教室", back: "きょうしつ - aula" },
+  { front: "合格", back: "ごうかく - aprobar (un examen)" },
+  { front: "食堂", back: "しょくどう - comedor" },
+  { front: "生活", back: "せいかつ - vida cotidiana" },
+  { front: "楽しい", back: "たのしい - divertido" },
+  { front: "薬", back: "くすり - medicina" },
+  { front: "甘い", back: "あまい - dulce" },
+
+  { front: "開ける", back: "あける - abrir (algo)" },
+  { front: "開く", back: "あく - abrirse" },
+  { front: "閉める", back: "しめる - cerrar (algo)" },
+  { front: "閉まる", back: "しまる - cerrarse" },
+  { front: "消す", back: "けす - apagar, borrar" },
+  { front: "帰る", back: "かえる - volver, regresar" },
+  { front: "倒す", back: "たおす - derribar, tumbar" },
+  { front: "倒れる", back: "たおれる - caerse, colapsar" },
+  { front: "割る", back: "わる - romper, partir (algo)" },
+  { front: "割れる", back: "われる - romperse, partirse" },
+  { front: "燃やす", back: "もやす - quemar (algo)" },
+  { front: "燃える", back: "もえる - arder, quemarse" },
+  { front: "伝える", back: "つたえる - transmitir, comunicar" },
+  { front: "伝わる", back: "つたわる - transmitirse, llegar" },
+  { front: "付ける", back: "つける - prender, adjuntar, aplicar" },
+  { front: "付く", back: "つく - prenderse, adherirse" },
+  { front: "止める", back: "とめる - detener (algo)" },
+  { front: "止まる", back: "とまる - detenerse" },
+  { front: "入れる", back: "いれる - meter, poner dentro" },
+  { front: "入る", back: "はいる - entrar" },
+  { front: "見つける", back: "みつける - encontrar" },
+  { front: "見つかる", back: "みつかる - ser encontrado" },
+  { front: "届ける", back: "とどける - entregar" },
+  { front: "届く", back: "とどく - llegar (algo entregado)" },
+  { front: "落とす", back: "おとす - dejar caer (algo)" },
+  { front: "落ちる", back: "おちる - caerse" },
+  { front: "流す", back: "ながす - dejar fluir, verter" },
+  { front: "流れる", back: "ながれる - fluir" },
+  { front: "減らす", back: "へらす - reducir (algo)" },
+  { front: "減る", back: "へる - reducirse, disminuir" },
+  { front: "助ける", back: "たすける - ayudar, rescatar" },
+  { front: "助かる", back: "たすかる - ser salvado, sobrevivir" },
+  { front: "隠す", back: "かくす - esconder (algo)" },
+  { front: "隠れる", back: "かくれる - esconderse" },
+  { front: "育てる", back: "そだてる - criar, educar" },
+  { front: "育つ", back: "そだつ - crecer" },
+  { front: "乗せる", back: "のせる - subir (algo/alguien) a un vehículo" },
+  { front: "乗る", back: "のる - subir(se) a un vehículo" },
+  { front: "地図", back: "ちず - mapa" },
+  { front: "相談", back: "そうだん - consulta, hablar con alguien" },
+  { front: "体重", back: "たいじゅう - peso corporal" },
+  { front: "家族", back: "かぞく - familia" },
+  { front: "父", back: "ちち - mi padre" },
+  { front: "母", back: "はは - mi madre" },
+  { front: "お父さん", back: "おとうさん - padre (de otro / forma respetuosa)" },
+  { front: "お母さん", back: "おかあさん - madre (de otro / forma respetuosa)" },
+  { front: "兄", back: "あに - mi hermano mayor" },
+  { front: "姉", back: "あね - mi hermana mayor" },
+  { front: "弟", back: "おとうと - hermano menor" },
+  { front: "妹", back: "いもうと - hermana menor" },
+  { front: "兄弟", back: "きょうだい - hermanos" },
+  { front: "姉妹", back: "しまい - hermanas" },
+  { front: "祖父", back: "そふ - mi abuelo" },
+  { front: "祖母", back: "そぼ - mi abuela" },
+  { front: "おじいさん", back: "abuelo (de otro / forma respetuosa)" },
+  { front: "おばあさん", back: "abuela (de otro / forma respetuosa)" },
+  { front: "夫", back: "おっと - mi esposo" },
+  { front: "妻", back: "つま - mi esposa" },
+  { front: "主人", back: "しゅじん - esposo / amo de casa" },
+  { front: "家内", back: "かない - esposa (forma humilde)" },
+  { front: "子供", back: "こども - hijo / niño" },
+  { front: "息子", back: "むすこ - hijo (varón)" },
+  { front: "娘", back: "むすめ - hija" },
+  { front: "引く", back: "ひく - hacer tirón, atraer" },
+  
+];
+
+const gramatica = [
+  { front: "のような", back: "Algo como otra cosa (apariencia, físico)" },
+    { front: "のように", back: "Algo como otra cosa (manera, acción)" },
+    { front: "～そう", back: "Parece que..." },
+  { front: "～たい", back: "Querer hacer algo (forma volitiva de un verbo)" },
+  { front: "～ながら", back: "mientras" },
+  { front: "～ことがある", back: "Expresa que algo ha sucedido ocasionalmente" },
+  { front: "～すぎる", back: "Demasiado..." },
+  { front: "～でしょう", back: "Suposición, probablemente" },
+  { front: "～てもいい", back: "Está bien hacer..., permiso" },
+    { front: "～てある", back: "Acción realizada o completada con un efecto presente (algo hecho y dejado así)" }
+,{ front: "ために", back: "Para, con el fin de..." },
+  { front: "のに", back: "Aunque, a pesar de..." },
+  { front: "だけ", back: "Solo, únicamente" },
+  { front: "そして", back: "Y, además" },
+  { front: "どうして", back: "Por qué" },
+  { front: "どのような", back: "Qué tipo de..." },
+  { front: "どのように", back: "De qué manera..., cómo..." },
+  { front: "ないで", back: "Sin hacer algo / no hagas..." },
+    { front: "ようになる", back: "Algo logrado con esfuerzo / llegar a poder hacer algo" },
+  { front: "ようにする", back: "Hacer lo posible para hacer algo / procurar hacer algo" },
+    { front: "Vる + ために", back: "Para..., con el fin de..., por causa de algo" },
+    { front: "Vる + と", back: "Al... おすと(Al apretar)" },
+
+
+];
+
+
+
+  // --- Elementos DOM ---
+  const questionEl = document.getElementById('question');
+  const answerInput = document.getElementById('answerInput');
+  const checkBtn = document.getElementById('checkBtn');
+  const resultEl = document.getElementById('result');
+  const correctCountEl = document.getElementById('correctCount');
+  const incorrectCountEl = document.getElementById('incorrectCount');
+  const remainingCountEl = document.getElementById('remainingCount');
+
+  const vocabBtn = document.getElementById('vocabBtn');
+  const kanjiBtn = document.getElementById('kanjiBtn');
+  const gramBtn = document.getElementById('gramBtn');
+  const mixBtn = document.getElementById('mixBtn');
+
+  // --- Estado ---
+  let correct = 0;
+  let incorrect = 0;
+  let remainingCards = [];
+  let currentCard = null;
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startSet(cardsArray) {
+    remainingCards = shuffle(cardsArray);
+    correct = 0;
+    incorrect = 0;
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    resultEl.textContent = "";
+    answerInput.value = "";
+    if (remainingCards.length === 0) {
+      questionEl.textContent = "¡Has terminado este set!";
+      updateStats();
+      return;
+    }
+    currentCard = remainingCards.pop();
+    questionEl.textContent = currentCard.front;
+    updateStats();
+    answerInput.focus();
+  }
+
+  // Comprobar respuesta
+function checkAnswer() {
+  if (!currentCard) return;
+  const userAnswer = answerInput.value.trim().toLowerCase();
+  const correctAnswer = currentCard.back.trim().toLowerCase();
+  if (!userAnswer) return;
+
+  if (correctAnswer.includes(userAnswer)) {
+    resultEl.innerHTML = `✅ ¡Correcto!<br>Respuesta: "${currentCard.back}"`;
+    correct++;
+  } else {
+    resultEl.innerHTML = `❌ Incorrecto.<br>Respuesta: "${currentCard.back}"`;
+    incorrect++;
+  }
+
+  updateStats();
+}
+
+// Botón siguiente
+const nextBtn = document.getElementById('nextBtn');
+nextBtn.addEventListener('click', nextQuestion);
+
+
+
+
+  function updateStats() {
+    correctCountEl.textContent = correct;
+    incorrectCountEl.textContent = incorrect;
+    remainingCountEl.textContent = remainingCards.length;
+  }
+
+  checkBtn.addEventListener('click', checkAnswer);
+  answerInput.addEventListener('keydown', e => { if (e.key==='Enter') checkAnswer(); });
+
+  // --- Botones para cambiar set ---
+  vocabBtn.addEventListener('click', () => startSet(vocabulario));
+  kanjiBtn.addEventListener('click', () => startSet(kanjisN4));
+  gramBtn.addEventListener('click', () => startSet(gramatica));
+  mixBtn.addEventListener('click', () => startSet([...vocabulario, ...kanjisN4, ...gramatica]));
+</script>
+</body>
+</html>
