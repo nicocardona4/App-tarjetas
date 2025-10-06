@@ -108,6 +108,7 @@
   <div>Incorrectas: <span id="incorrectCount">0</span></div>
   <div>Restantes: <span id="remainingCount">0</span></div>
 </div>
+<script src="https://unpkg.com/wanakana@4.0.2/umd/wanakana.min.js"></script>
 
 <script>
   // --- Arrays de tarjetas ---
@@ -379,11 +380,24 @@ const gramatica = [
   // Comprobar respuesta
 function checkAnswer() {
   if (!currentCard) return;
-  const userAnswer = answerInput.value.trim().toLowerCase();
+  let userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = currentCard.back.trim().toLowerCase();
   if (!userAnswer) return;
 
+  let isCorrect = false;
+
+  // Primero, compará directamente
   if (correctAnswer.includes(userAnswer)) {
+    isCorrect = true;
+  } else {
+    // Intentar convertir romaji a hiragana y comparar
+    const converted = wanakana.toHiragana(userAnswer);
+    if (correctAnswer.includes(converted)) {
+      isCorrect = true;
+    }
+  }
+
+  if (isCorrect) {
     resultEl.innerHTML = `✅ ¡Correcto!<br>Respuesta: "${currentCard.back}"`;
     correct++;
   } else {
