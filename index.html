@@ -382,31 +382,34 @@ function checkAnswer() {
   if (!currentCard) return;
   let userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = currentCard.back.trim().toLowerCase();
-  if (!userAnswer) return;
 
   let isCorrect = false;
 
-  // Primero, compará directamente
-  if (correctAnswer.includes(userAnswer)) {
-    isCorrect = true;
-  } else {
-    // Intentar convertir romaji a hiragana y comparar
-    const converted = wanakana.toHiragana(userAnswer);
-    if (correctAnswer.includes(converted)) {
+  if (userAnswer) {
+    // Primero, comparar directamente
+    if (correctAnswer.includes(userAnswer)) {
       isCorrect = true;
+    } else {
+      // Intentar convertir romanji a hiragana y comparar
+      const converted = wanakana.toHiragana(userAnswer);
+      if (correctAnswer.includes(converted)) {
+        isCorrect = true;
+      }
     }
   }
 
+  // Mostrar siempre la respuesta
   if (isCorrect) {
     resultEl.innerHTML = `✅ ¡Correcto!<br>Respuesta: "${currentCard.back}"`;
     correct++;
   } else {
     resultEl.innerHTML = `❌ Incorrecto.<br>Respuesta: "${currentCard.back}"`;
-    incorrect++;
+    if (userAnswer) incorrect++; // Solo contar como incorrecta si escribió algo
   }
 
   updateStats();
 }
+
 
 // Botón siguiente
 const nextBtn = document.getElementById('nextBtn');
