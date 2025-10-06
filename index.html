@@ -359,6 +359,52 @@ const vocabulario = [
   { front: "工学", back: "こうがく - ingeniería" }
 ];
 
+const numeros = [
+  // 🗓️ Días del mes (difíciles e irregulares)
+  { front: "一日", back: "" },
+  { front: "二日", back: "" },
+  { front: "三日", back: "" },
+  { front: "四日", back: "" },
+  { front: "五日", back: "" },
+  { front: "六日", back: "" },
+  { front: "七日", back: "" },
+  { front: "八日", back: "" },
+  { front: "九日", back: "" },
+  { front: "十日", back: "" },
+  { front: "十四日", back: "" },
+  { front: "二十日", back: "" },
+  { front: "二十四日", back: "" },
+  { front: "二十九日", back: "" },
+  { front: "三十日", back: "" },
+  { front: "三十一日", back: "" },
+
+  // 🌸 Meses
+  { front: "一月", back: "" },
+  { front: "二月", back: "" },
+  { front: "三月", back: "" },
+  { front: "四月", back: "" },
+  { front: "五月", back: "" },
+  { front: "六月", back: "" },
+  { front: "七月", back: "" },
+  { front: "八月", back: "" },
+  { front: "九月", back: "" },
+  { front: "十月", back: "" },
+  { front: "十一月", back: "" },
+  { front: "十二月", back: "" },
+
+  // 📆 Fechas completas
+  { front: "一月一日", back: "" },
+  { front: "三月三日", back: "" },
+  { front: "四月十日", back: "" },
+  { front: "五月五日", back: "" },
+  { front: "七月七日", back: "" },
+  { front: "八月十五日", back: "" },
+  { front: "九月九日", back: "" },
+  { front: "十月十日", back: "" },
+  { front: "十一月二十日", back: "" },
+  { front: "十二月三十一日", back: "" }
+];
+
 const gramatica = [
   { front: "のような", back: "Algo como otra cosa (apariencia, físico)" },
     { front: "のように", back: "Algo como otra cosa (manera, acción)" },
@@ -492,7 +538,7 @@ nextBtn.addEventListener('click', nextQuestion);
   vocabBtn.addEventListener('click', () => startSet(vocabulario));
   kanjiBtn.addEventListener('click', () => startSet(kanjisN4));
   gramBtn.addEventListener('click', () => startSet(gramatica));
-  mixBtn.addEventListener('click', () => startSet([...vocabulario, ...kanjisN4, ...gramatica]));
+  mixBtn.addEventListener('click', () => startSet([...vocabulario, ...kanjisN4, ...gramatica,...numeros]));
 </script>
 </body>
 </html>
