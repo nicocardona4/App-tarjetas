@@ -112,6 +112,7 @@
 </div>
 <script src="https://unpkg.com/wanakana@4.0.2/umd/wanakana.min.js"></script>
 
+<script src="https://unpkg.com/wanakana@4.0.2/umd/wanakana.min.js"></script>
 <script>
   // --- Arrays de tarjetas ---
 const vocabulario = [
@@ -461,11 +462,11 @@ const gramatica = [
 ];
 
 
-
   // --- Elementos DOM ---
   const questionEl = document.getElementById('question');
   const answerInput = document.getElementById('answerInput');
   const checkBtn = document.getElementById('checkBtn');
+  const nextBtn = document.getElementById('nextBtn');
   const resultEl = document.getElementById('result');
   const correctCountEl = document.getElementById('correctCount');
   const incorrectCountEl = document.getElementById('incorrectCount');
@@ -480,8 +481,11 @@ const gramatica = [
   let correct = 0;
   let incorrect = 0;
   let remainingCards = [];
+  let wrongCards = [];
   let currentCard = null;
+  let isRepeatingWrong = false;
 
+  // --- Funciones ---
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -495,63 +499,75 @@ const gramatica = [
     remainingCards = shuffle(cardsArray);
     correct = 0;
     incorrect = 0;
+    wrongCards = [];
+    isRepeatingWrong = false;
     nextQuestion();
   }
 
   function nextQuestion() {
     resultEl.textContent = "";
     answerInput.value = "";
+
+    // Si no quedan cartas...
     if (remainingCards.length === 0) {
-      questionEl.textContent = "¡Has terminado este set!";
-      updateStats();
-      return;
+      // Si terminamos el primer intento y hubo errores
+      if (!isRepeatingWrong && wrongCards.length > 0) {
+        questionEl.textContent = "Repasemos las que fallaste...";
+        remainingCards = shuffle(wrongCards);
+        wrongCards = [];
+        isRepeatingWrong = true;
+        updateStats();
+        return;
+      }
+
+      // Si terminamos todo
+      if (isRepeatingWrong && wrongCards.length === 0) {
+        questionEl.textContent = "¡Has terminado todas las tarjetas! 🎉";
+        updateStats();
+        return;
+      }
     }
+
     currentCard = remainingCards.pop();
     questionEl.textContent = currentCard.front;
     updateStats();
     answerInput.focus();
   }
 
-  // Comprobar respuesta
-function checkAnswer() {
-  if (!currentCard) return;
-  let userAnswer = answerInput.value.trim().toLowerCase();
-  const correctAnswer = currentCard.back.trim().toLowerCase();
+  // --- Comprobar respuesta ---
+  function checkAnswer() {
+    if (!currentCard) return;
+    let userAnswer = answerInput.value.trim().toLowerCase();
+    const correctAnswer = currentCard.back.trim().toLowerCase();
 
-  let isCorrect = false;
+    let isCorrect = false;
 
-  if (userAnswer) {
-    // Primero, comparar directamente
-    if (correctAnswer.includes(userAnswer)) {
-      isCorrect = true;
-    } else {
-      // Intentar convertir romanji a hiragana y comparar
-      const converted = wanakana.toHiragana(userAnswer);
-      if (correctAnswer.includes(converted)) {
+    if (userAnswer) {
+      // Comparación directa
+      if (correctAnswer.includes(userAnswer)) {
         isCorrect = true;
+      } else {
+        // Comparar versión en hiragana si puso romaji
+        const converted = wanakana.toHiragana(userAnswer);
+        if (correctAnswer.includes(converted)) {
+          isCorrect = true;
+        }
       }
     }
+
+    // Mostrar respuesta siempre
+    if (isCorrect) {
+      resultEl.innerHTML = `✅ ¡Correcto!<br>Respuesta: "${currentCard.back}"`;
+      correct++;
+    } else {
+      resultEl.innerHTML = `❌ Incorrecto.<br>Respuesta: "${currentCard.back}"`;
+      if (userAnswer) incorrect++;
+      // Guardar la tarjeta para repasarla después
+      wrongCards.push(currentCard);
+    }
+
+    updateStats();
   }
-
-  // Mostrar siempre la respuesta
-  if (isCorrect) {
-    resultEl.innerHTML = `✅ ¡Correcto!<br>Respuesta: "${currentCard.back}"`;
-    correct++;
-  } else {
-    resultEl.innerHTML = `❌ Incorrecto.<br>Respuesta: "${currentCard.back}"`;
-    if (userAnswer) incorrect++; // Solo contar como incorrecta si escribió algo
-  }
-
-  updateStats();
-}
-
-
-// Botón siguiente
-const nextBtn = document.getElementById('nextBtn');
-nextBtn.addEventListener('click', nextQuestion);
-
-
-
 
   function updateStats() {
     correctCountEl.textContent = correct;
@@ -559,14 +575,17 @@ nextBtn.addEventListener('click', nextQuestion);
     remainingCountEl.textContent = remainingCards.length;
   }
 
+  // --- Eventos ---
   checkBtn.addEventListener('click', checkAnswer);
-  answerInput.addEventListener('keydown', e => { if (e.key==='Enter') checkAnswer(); });
+  nextBtn.addEventListener('click', nextQuestion);
+  answerInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
 
-  // --- Botones para cambiar set ---
+  // --- Selección de set ---
   vocabBtn.addEventListener('click', () => startSet(vocabulario));
   kanjiBtn.addEventListener('click', () => startSet(kanjisN4));
   gramBtn.addEventListener('click', () => startSet(gramatica));
-  mixBtn.addEventListener('click', () => startSet([...vocabulario, ...kanjisN4, ...gramatica,...numeros]));
+  mixBtn.addEventListener('click', () => startSet([...vocabulario, ...kanjisN4, ...gramatica, ...numeros]));
 </script>
+
 </body>
 </html>
