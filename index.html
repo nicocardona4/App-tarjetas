@@ -516,34 +516,51 @@ const gramatica = [
   }
 
   function nextQuestion() {
-    resultEl.textContent = "";
-    answerInput.value = "";
+  resultEl.textContent = "";
+  answerInput.value = "";
 
-    // Si no quedan cartas...
-    if (remainingCards.length === 0) {
-      // Si terminamos el primer intento y hubo errores
-      if (!isRepeatingWrong && wrongCards.length > 0) {
-        questionEl.textContent = "Repasemos las que fallaste...";
-        remainingCards = shuffle(wrongCards);
-        wrongCards = [];
-        isRepeatingWrong = true;
-        updateStats();
-        return;
-      }
+  // Si no quedan cartas...
+  if (remainingCards.length === 0) {
+    // Si terminamos la ronda principal y hubo errores → repaso
+    if (!isRepeatingWrong && wrongCards.length > 0) {
+      questionEl.textContent = "Repasemos las que fallaste...";
+      remainingCards = shuffle(wrongCards);
+      wrongCards = [];
+      isRepeatingWrong = true;
 
-      // Si terminamos todo
-      if (isRepeatingWrong && wrongCards.length === 0) {
-        questionEl.textContent = "¡Has terminado todas las tarjetas! 🎉";
-        updateStats();
-        return;
-      }
+      // Reiniciamos los contadores
+      correct = 0;
+      incorrect = 0;
+      updateStats();
+      return;
     }
 
-    currentCard = remainingCards.pop();
-    questionEl.textContent = currentCard.front;
-    updateStats();
-    answerInput.focus();
+    // Si estamos en ronda de repaso y aún hay errores → otra vuelta
+    if (isRepeatingWrong && wrongCards.length > 0) {
+      questionEl.textContent = "Aún quedan algunas incorrectas, sigamos...";
+      remainingCards = shuffle(wrongCards);
+      wrongCards = [];
+      correct = 0;
+      incorrect = 0;
+      updateStats();
+      return;
+    }
+
+    // Si terminamos todo sin errores → fin total
+    if (isRepeatingWrong && wrongCards.length === 0) {
+      questionEl.textContent = "¡Has terminado todas las tarjetas sin errores! 🎉";
+      updateStats();
+      return;
+    }
   }
+
+  // Mostrar siguiente tarjeta
+  currentCard = remainingCards.pop();
+  questionEl.textContent = currentCard.front;
+  updateStats();
+  answerInput.focus();
+}
+
 
   // --- Comprobar respuesta ---
   function checkAnswer() {
